@@ -1,0 +1,13 @@
+kubectl --server=[] --token=[jwt] --insecure-tls-verify-skip get namespace
+
+kubectl --server=[] --token=[jwt] --insecure-tls-verify-skip get pod -n namespace
+
+kubectl --server=[] --token=[jwt] --insecure-tls-verify-skip auth can-i --list -n namespace
+
+kubectl --server=[] --token=[jwt] --insecure-tls-verify-skip 
+
+Privilege Escalation:
+https://github.com/psun003/badPods
+
+
+
